@@ -10,10 +10,43 @@ Endpoints:
 import json
 import os
 import hmac
+import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from integracao.fluxo_completo import FluxoCoordIA
 
 fluxo = FluxoCoordIA()
+
+# Contrato conservador para dados sintéticos. Declaração de origem NÃO é atestação.
+CAMPOS_SINTETICOS = frozenset({
+    "tipo", "fonte", "valor", "frequencia", "nota_media", "pendencias_abertas",
+    "dias_restantes", "entregue", "nome_documento", "completo", "dias_atraso",
+    "id_planejamento", "disciplina", "aluno_id", "ts"
+})
+
+
+def validar_eventos_sinteticos(eventos):
+    """Evita chaves pessoais óbvias e IDs reais no endpoint de laboratório."""
+    if not isinstance(eventos, list) or len(eventos) > 100:
+        return False
+    for ev in eventos:
+        if not isinstance(ev, dict) or ev.get("fonte") != "sintetico":
+            return False
+        if set(ev).difference(CAMPOS_SINTETICOS):
+            return False
+        aluno_id = ev.get("aluno_id")
+        if aluno_id is not None and (
+            not isinstance(aluno_id, str)
+            or re.fullmatch(r"SINT-[A-Za-z0-9_-]{1,32}", aluno_id) is None
+        ):
+            return False
+        plan_id = ev.get("id_planejamento")
+        if plan_id is not None and (
+            not isinstance(plan_id, str)
+            or re.fullmatch(r"PLN-[A-Za-z0-9_-]{1,48}", plan_id) is None
+        ):
+            return False
+    return True
+
 
 class Handler(BaseHTTPRequestHandler):
     def _json(self, code, data):
@@ -68,12 +101,9 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path == "/processar":
             eventos = payload.get("eventos", [])
-            if not isinstance(eventos, list) or len(eventos) > 100:
-                self._json(422, {"erro": "lote inválido"})
-                return
             # Nenhum conector escolar real está autenticado nesta API mínima.
-            if any(not isinstance(ev, dict) or ev.get("fonte") != "sintetico" for ev in eventos):
-                self._json(422, {"erro": "somente eventos declarados sintéticos neste endpoint (origem ainda não atestada)"})
+            if not validar_eventos_sinteticos(eventos):
+                self._json(422, {"erro": "lote sintético inválido (origem não atestada)"})
                 return
             try:
                 recs = fluxo.processar(eventos)
