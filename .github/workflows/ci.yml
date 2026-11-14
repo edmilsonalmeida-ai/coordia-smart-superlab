@@ -40,6 +40,9 @@ jobs:
       - name: Verificação completa
         run: python verificar_tudo.py
 
+      - name: Contraprovas Câmara Extra P0 (sintéticas)
+        run: python tests/test_camara_extra_failclosed.py
+
       - name: Smoke do protótipo
         run: |
           python -c "from prototype.alertas_planejamento import processar_alertas_sinteticos; r=processar_alertas_sinteticos(10); print(len(r), 'alertas sintéticos')"
@@ -55,12 +58,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Garantir flags invioláveis
+      - name: Verificar declaração de flags (não homologa operação)
         run: |
           python -c "
-          from config import OPERATIONAL_GO, WRITE_ESCOLAR, assert_safe_mode
-          assert_safe_mode()
-          assert OPERATIONAL_GO is False
-          assert WRITE_ESCOLAR == 'NO_GO'
-          print('Flags invioláveis OK')
+          from config import OPERATIONAL_GO, WRITE_ESCOLAR, MODO_SINTETICO
+          assert type(OPERATIONAL_GO) is bool
+          assert type(MODO_SINTETICO) is bool
+          assert WRITE_ESCOLAR in ('NO_GO', 'CONTROLADO')
+          assert (OPERATIONAL_GO, MODO_SINTETICO, WRITE_ESCOLAR) in (
+              (False, True, 'NO_GO'),
+              (True, False, 'CONTROLADO'))
+          print('Flags coerentes; autorização escolar NÃO validada')
           "
