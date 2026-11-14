@@ -73,9 +73,13 @@ class Handler(BaseHTTPRequestHandler):
                 return
             # Nenhum conector escolar real está autenticado nesta API mínima.
             if any(not isinstance(ev, dict) or ev.get("fonte") != "sintetico" for ev in eventos):
-                self._json(422, {"erro": "somente eventos sintéticos comprovados neste endpoint"})
+                self._json(422, {"erro": "somente eventos declarados sintéticos neste endpoint (origem ainda não atestada)"})
                 return
-            recs = fluxo.processar(eventos)
+            try:
+                recs = fluxo.processar(eventos)
+            except (ValueError, RuntimeError):
+                self._json(422, {"erro": "lote rejeitado pelo conector ou auditor"})
+                return
             self._json(200, {"recomendacoes": recs, "total": len(recs)})
         else:
             resultado = fluxo.decidir(
