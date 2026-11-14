@@ -54,12 +54,9 @@ def test_entrada_adversarial_malformada():
         None,
     ]
     for caso in casos:
-        try:
-            recs = nucleo.processar(caso or {})
-            for rec in recs:
-                assert rec.get("status") == "recomendado"
-        except Exception:
-            pass
+        recs = nucleo.processar(caso or {})
+        for rec in recs:
+            assert rec.get("status") == "recomendado"
 
 def test_volume_sintetico():
     recs = processar_alertas_sinteticos(50)
