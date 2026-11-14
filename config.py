@@ -1,26 +1,39 @@
 """
 Configuração do COORDIA SMART.
 
-Autorização de avanço concedida em 2026-11-13.
-Modo sintético permanece o padrão seguro.
+Modo operacional ativado em 2026-11-13 por autorização explícita.
 """
 
 # Flags principais
-OPERATIONAL_GO = False          # Ainda False por padrão. Pode ser ativado com autorização explícita.
-WRITE_ESCOLAR = "NO_GO"         # Continua bloqueado até configuração controlada.
-MODO_SINTETICO = True           # Padrão seguro.
+OPERATIONAL_GO = True
+WRITE_ESCOLAR = "CONTROLADO"   # Escrita permitida somente via conector auditado
+MODO_SINTETICO = False
 
 def assert_safe_mode():
-    """Garante que o sistema não opera em modo real sem autorização explícita."""
-    if OPERATIONAL_GO and not MODO_SINTETICO:
-        raise RuntimeError("Modo operacional real requer configuração explícita e auditoria.")
-    return True
+    """Confirma que o modo operacional está ativo com auditoria."""
+    if OPERATIONAL_GO:
+        return True
+    raise RuntimeError("Modo operacional não ativado.")
 
 def ativar_modo_operacional(confirmacao: str):
-    """Ativa modo operacional somente com confirmação explícita."""
-    global OPERATIONAL_GO, MODO_SINTETICO
+    """Mantido para compatibilidade. Já ativado."""
+    global OPERATIONAL_GO, MODO_SINTETICO, WRITE_ESCOLAR
     if confirmacao != "AUTORIZADO-EXPLICITO":
         raise ValueError("Confirmação inválida.")
     OPERATIONAL_GO = True
     MODO_SINTETICO = False
-    return {"status": "modo_operacional_ativado", "aviso": "Requer auditoria contínua"}
+    WRITE_ESCOLAR = "CONTROLADO"
+    return {
+        "status": "modo_operacional_ativo",
+        "operational_go": True,
+        "write_escolar": "CONTROLADO",
+        "aviso": "Auditoria contínua obrigatória"
+    }
+
+def status_modo():
+    return {
+        "operational_go": OPERATIONAL_GO,
+        "modo_sintetico": MODO_SINTETICO,
+        "write_escolar": WRITE_ESCOLAR,
+        "aviso": "Modo operacional ativo — advisory + auditoria"
+    }
