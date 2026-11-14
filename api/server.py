@@ -6,7 +6,14 @@ Advisory only.
 """
 
 import json
+import sys
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# Permite executar de qualquer diretório
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
 from agents.nucleo import Nucleo
 from agents.detectores import DETECTORES_PADRAO
 from agents.log_persistente import LogPersistente
@@ -50,12 +57,12 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/health":
             self._send(200, {"status": "ok", "detectores": len(nucleo.detectores)})
         elif self.path == "/log":
-            self._send(200, {"entradas": log.ler_todos()[-20:]})  # últimas 20
+            self._send(200, {"entradas": log.ler_todos()[-20:]})
         else:
             self._send(404, {"erro": "rota não encontrada"})
 
     def log_message(self, format, *args):
-        return  # silencioso
+        return
 
 def main(port: int = 8080):
     server = HTTPServer(("127.0.0.1", port), Handler)
