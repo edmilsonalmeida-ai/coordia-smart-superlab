@@ -39,6 +39,8 @@ class AgenteAuditor:
                 continue
             if rec.get("status") != "recomendado":
                 problemas.append(f"recomendacao_{indice}: status inválido")
+            if rec.get("tipo") == "alerta_erro":
+                problemas.append(f"recomendacao_{indice}: erro de detector exige reteste")
             if not isinstance(rec.get("tipo"), str) or not rec["tipo"].strip():
                 problemas.append(f"recomendacao_{indice}: tipo ausente")
             if not isinstance(rec.get("recomendacao"), str) or not rec["recomendacao"].strip():
