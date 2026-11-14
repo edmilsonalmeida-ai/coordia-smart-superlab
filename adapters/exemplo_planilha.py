@@ -7,27 +7,42 @@ import csv
 from io import StringIO
 from typing import List, Dict
 
+def _safe_float(val):
+    if val is None or str(val).strip() == "":
+        return None
+    try:
+        return float(str(val).strip())
+    except ValueError:
+        return None
+
+def _safe_int(val):
+    if val is None or str(val).strip() == "":
+        return None
+    try:
+        return int(float(str(val).strip()))
+    except ValueError:
+        return None
+
 def linhas_para_eventos(csv_texto: str, fonte: str = "planilha") -> List[Dict]:
     """Converte CSV simples em lista de eventos."""
     eventos = []
-    reader = csv.DictReader(StringIO(csv_texto))
+    reader = csv.DictReader(StringIO(csv_texto.strip()))
     for row in reader:
         evento = {
-            "tipo": row.get("tipo", "desconhecido"),
-            "valor": float(row["valor"]) if row.get("valor") else None,
-            "aluno_id": row.get("aluno_id"),
+            "tipo": (row.get("tipo") or "").strip() or "desconhecido",
+            "valor": _safe_float(row.get("valor")),
+            "aluno_id": (row.get("aluno_id") or "").strip() or None,
             "fonte": fonte,
-            "dias_restantes": int(row["dias_restantes"]) if row.get("dias_restantes") else None,
-            "frequencia": float(row["frequencia"]) if row.get("frequencia") else None,
-            "nota_media": float(row["nota_media"]) if row.get("nota_media") else None,
-            "pendencias_abertas": int(row["pendencias_abertas"]) if row.get("pendencias_abertas") else 0,
+            "dias_restantes": _safe_int(row.get("dias_restantes")),
+            "frequencia": _safe_float(row.get("frequencia")),
+            "nota_media": _safe_float(row.get("nota_media")),
+            "pendencias_abertas": _safe_int(row.get("pendencias_abertas")) or 0,
         }
-        # Remove Nones
         evento = {k: v for k, v in evento.items() if v is not None}
-        eventos.append(evento)
+        if evento.get("tipo") != "desconhecido" or len(evento) > 2:
+            eventos.append(evento)
     return eventos
 
-# Exemplo de uso
 if __name__ == "__main__":
     exemplo = """tipo,valor,aluno_id,dias_restantes
 frequencia,0.62,A001,
