@@ -7,6 +7,7 @@
 ## Execução verificável
 - [Run de CI #43601868378](https://github.com/edmilsonalmeida-ai/coordia-smart-superlab/actions/runs/43601868378): três jobs PASS, Python 3.11, 3.12 e verificação declarativa das flags; cinco grupos de contraprovas no primeiro ciclo.
 - [Run de CI #43602245249](https://github.com/edmilsonalmeida-ai/coordia-smart-superlab/actions/runs/43602245249): três jobs PASS, com sete grupos de contraprovas e guardas adicionais para a integração.
+- [Run de CI #43602829545](https://github.com/edmilsonalmeida-ai/coordia-smart-superlab/actions/runs/43602829545): três jobs PASS; acrescenta teste HTTP ponta a ponta **local** de token ausente/inválido, origem declarada, recusa de campos pessoais, decisão válida, índice negativo e repetição.
 - O código submetido **não** foi mesclado à main. Nenhum deploy, consumo de API de agente externo, acesso ao Ômega ou escrita escolar foi executado nesta revisão.
 
 ## Matriz FATO / PROVA / LACUNA / RISCO / RETESTE / DECISÃO
@@ -23,10 +24,10 @@
 ### P0-02 API local não autenticava decisões
 - **FATO original:** `POST /decidir` aceitava pedido sem token, com fallback `responsavel="sistema"`.
 - **PROVA:** `integracao/api_integracao.py` da base e diff da PR #3; `test_api_falha_fechado_sem_token`.
-- **CORREÇÃO:** ambas as rotas POST exigem Bearer `COORDIA_API_TOKEN` (sem token ou token curto => 503; token inválido => 401), com limite de corpo e validação de esquema básica. O endpoint não aceita origem distinta de `sintetico` declarada.
-- **LACUNA:** token de serviço não autentica a identidade individual do coordenador; a string de origem `sintetico` pode ser autodeclarada. Ainda falta teste HTTP ponta a ponta.
+- **CORREÇÃO:** ambas as rotas POST exigem Bearer `COORDIA_API_TOKEN` (sem token ou token curto => 503; token inválido => 401), com limite de corpo e validação de esquema básica. O endpoint não aceita origem distinta de `sintetico` declarada; o contrato também rejeita chaves fora da allowlist e identificadores de aluno que não usem prefixo sintético.
+- **LACUNA:** token de serviço não autentica a identidade individual do coordenador; a string de origem `sintetico` pode ser autodeclarada. O teste HTTP ponta a ponta em servidor local foi executado no CI, mas não comprova IAM institucional, conectividade escolar ou proteção completa de PII.
 - **RISCO residual:** identidade humana, controle granular e proteção de PII não homologados.
-- **RETESTE:** teste negativo de autorização e teste separado de API HTTP.
+- **RETESTE:** testes de método + HTTP local com autorização, esquema estrito, payload PII rejeitado e resposta de decisão.
 - **DECISÃO:** PASS LAB na guarda testada; API institucional NO-GO.
 
 ### P0-03 Decisão humana sem persistência e com repetição possível
@@ -69,7 +70,7 @@
 **Operação institucional:** `NO_GO_SEM_PROVA`. Isso não modifica flags do projeto nem o estado de outros repositórios CoordIA.
 
 ## Próximos testes técnicos concretos
-1. Exercitar API por HTTP em sandbox, com token ausente/errado/correto, reinício e payloads com PII.
+1. Expandir o HTTP local já aprovado para reinício, concorrência, JSON adversarial e fuzzing; posteriormente validar IAM institucional em ambiente autorizado e isolado.
 2. Proveniência vinculada a fonte autorizada e normalização de schemas, sem consultar dados reais.
 3. Ledger com integridade verificável e idempotência após reinício; tratar identificadores conforme LGPD.
 4. Contraprova por executor/agente distinto, com commit HEAD, run, custo (se houver), divergência e decisão por escopo, sem assinatura externa obrigatória.
