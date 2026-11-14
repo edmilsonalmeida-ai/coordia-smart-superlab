@@ -1,43 +1,46 @@
 # COORDIA SMART — Superinvestigação Científica e Engenharia Autônoma
 
-**Expediente técnico-científico** · 13/11/2026 · Câmara de Ciências + Câmara de Engenharia
+**Arquitetura leve, eficiente e extensível.**
 
-## Objetivo
+## Ideia central
 
-Investigar o SMART norte-americano, compreender sua arquitetura, avaliar evidências científicas e projetar uma versão adaptada ao CoordIA, com agentes especializados, prevenção de problemas e auditoria verificável.
+Núcleo mínimo que gera recomendações advisory com proveniência.  
+Tudo o mais (detectores, fontes, notificações, armazenamento) é plugável.
 
-## Princípio Central
+> A capacidade de antecipar cresce junto com a capacidade de provar o que foi feito.
 
-> A capacidade de antecipar problemas precisa crescer junto com a capacidade de provar de onde vieram os dados, quem os verificou e o que realmente foi executado.
+## Começar rápido
 
-## Arquitetura de Referência (FAA)
+```python
+from agents.nucleo import Nucleo, detector_frequencia
 
-### FMDS — Flow Management Data and Services
-Infraestrutura de integração e gestão de fluxos, dados e capacidade. Backbone tecnológico do Command Center, substitui o legado TFMS.
+nucleo = Nucleo([detector_frequencia])
+recs = nucleo.processar({
+    "tipo": "frequencia",
+    "valor": 0.68,
+    "fonte": "sistema_escolar",
+    "ts": "2026-11-13T21:00:00Z"
+})
+print(recs)
+print(nucleo.exportar_log())
+```
 
-### SMART — Strategic Management of Airspace, Routes and Trajectories
-Camada de inteligência (enhancement within FMDS) que utiliza informações do FMDS para antecipar congestionamentos e apoiar decisões. Predativo, advisory, com humano no loop.
+## Arquitetura
 
-## Questão para a Câmara de Engenharia
+Veja [`architecture/LEVE.md`](architecture/LEVE.md) — núcleo simples + regras de extensão.
 
-Podemos aproveitar a arquitetura preditiva do SMART para detectar e encaminhar pendências escolares **sem** transformar recomendações de IA em falsas confirmações de trabalho concluído?
+## Princípios
 
-**Resposta:** Sim, desde que a separação de camadas seja preservada:
+- Advisory only (nenhum agente confirma trabalho concluído)
+- Funções puras e interfaces mínimas
+- Zero dependências obrigatórias
+- Adaptação = novo adapter ou detector (sem mudar o núcleo)
+- Log imutável com proveniência
 
-1. Camada de dados / integração (análoga ao FMDS)
-2. Camada de inteligência preditiva (análoga ao SMART)
-3. Camada de decisão e execução humana com trilha auditável
+## Estrutura
 
-## Estrutura do Repositório
+- `agents/nucleo.py` — núcleo executável e leve
+- `architecture/LEVE.md` — design e regras de extensão
+- `docs/` — análise SMART/FMDS e mapeamento
 
-- `/docs` — Análises oficiais, mapeamentos, requisitos
-- `/agents` — Esboços de agentes especializados
-- `/architecture` — Diagramas e especificações
-
-## Contribuição para o SuperLAB
-
-Esta é uma contribuição concreta: aproveitar a arquitetura preditiva comprovada em escala nacional (FAA) mantendo proveniência e verificação humana.
-
----
-
-*Gerado como parte da superinvestigação COORDIA SMART.*
+Contribuição concreta ao SuperLAB: simples hoje, adaptável sempre.
