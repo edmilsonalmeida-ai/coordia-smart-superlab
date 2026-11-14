@@ -21,7 +21,8 @@ class ConectorCoordIA:
         """Processa um lote de eventos e retorna recomendações priorizadas."""
         todas = []
         for evento in eventos:
-            evento.setdefault("fonte", self.modo)
+            if not isinstance(evento, dict) or not isinstance(evento.get("fonte"), str) or not evento["fonte"].strip():
+                raise ValueError("evento sem fonte declarada; não presumir origem operacional")
             recs = self.nucleo.processar(evento)
             todas.extend(recs)
         return todas
