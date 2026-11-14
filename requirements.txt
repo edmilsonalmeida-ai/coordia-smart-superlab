@@ -1,0 +1,5 @@
+# COORDIA SMART — zero dependências obrigatórias
+# Tudo funciona com a biblioteca padrão do Python 3.10+
+#
+# Opcionais (não necessários):
+# pytest>=7.0
