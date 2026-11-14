@@ -33,14 +33,29 @@ class OrquestradorAgentes:
         # 3. Auditar
         aud = self.auditor.executar(priorizadas)
 
-        # 4. Preparar decisão
-        dec = self.decisor.executar(priorizadas)
+        # Sem aprovação do auditor, nenhuma recomendação vai ao decisor.
+        if not aud["ok"]:
+            return {
+                "fluxo": "detector → priorizador → auditor (BLOQUEADO)",
+                "eventos": len(eventos),
+                "recomendacoes": len(priorizadas),
+                "auditoria_ok": False,
+                "bloqueado": True,
+                "problemas_auditoria": aud["problemas"],
+                "pendentes_decisao": 0,
+                "top": [],
+                "aviso": "Fail-closed: auditoria reprovada, sem encaminhamento"
+            }
 
+        # 4. Preparar decisão humana somente após a auditoria.
+        dec = self.decisor.executar(priorizadas)
         return {
             "fluxo": "detector → priorizador → auditor → decisor",
             "eventos": len(eventos),
             "recomendacoes": len(priorizadas),
-            "auditoria_ok": aud["ok"],
+            "auditoria_ok": True,
+            "bloqueado": False,
+            "problemas_auditoria": [],
             "pendentes_decisao": dec["pendentes"],
             "top": dec["top"],
             "aviso": "Advisory only — decisão humana obrigatória"
