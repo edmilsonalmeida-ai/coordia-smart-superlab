@@ -3,7 +3,7 @@
 
 ## 1. Estado atual
 
-O CoordIA SMART está em **modo operacional ativo** na branch `main`.
+O repositório declara **modo operacional ativo** na branch `main`; essas flags, isoladamente, **não comprovam conector escolar, autorização institucional por operação ou homologação externa**.
 
 | Flag | Valor |
 |------|-------|
@@ -12,12 +12,12 @@ O CoordIA SMART está em **modo operacional ativo** na branch `main`.
 | WRITE_ESCOLAR | CONTROLADO |
 
 ### Capacidades entregues
-- Núcleo advisory com proveniência e log imutável
+- Núcleo advisory com origem declarada e log JSONL local (sem prova de imutabilidade criptográfica)
 - 5 detectores base + detectores extras
 - Priorização dinâmica com pesos ajustáveis
 - Missão 001 operacional
 - Orquestrador de pedidos
-- Orquestração de agentes especializados (Detector → Priorizador → Auditor → Decisor)
+- Pipeline local com quatro classes especializadas (Detector → Priorizador → Auditor → Decisor); agentes externos independentes não comprovados
 - API de integração
 - Adaptador de planilha
 - Fluxo de decisão humana
@@ -48,7 +48,7 @@ Log imutável
 - Testes adversariais: passando
 - Missão 001: executada com sucesso
 - Orquestração de agentes: funcionando
-- Modo operacional: ativo
+- Modo operacional: declarado nas flags; integração escolar real não demonstrada
 
 ## 4. Pendências reais
 
