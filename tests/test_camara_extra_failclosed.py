@@ -99,6 +99,38 @@ def test_api_falha_fechado_sem_token():
         assert fake.status is None
 
 
+
+def test_fluxo_bloqueia_erro_detector():
+    cwd = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            os.chdir(tmp)
+            fluxo = FluxoCoordIA()
+            fluxo.conector.processar_lote = lambda eventos: [{
+                "tipo": "alerta_erro", "recomendacao": "Revisar falha",
+                "status": "recomendado", "origem": "sintetico", "prioridade": 0.9
+            }]
+            try:
+                fluxo.processar([{"tipo": "teste", "fonte": "sintetico"}])
+                raise AssertionError("Fluxo liberou recomendação com erro de detector")
+            except RuntimeError as exc:
+                assert "AUDITORIA_REPROVADA" in str(exc)
+            assert fluxo.pendentes == []
+        finally:
+            os.chdir(cwd)
+
+
+def test_conector_nao_inventa_fonte():
+    from integracao.conector import ConectorCoordIA
+    conector = ConectorCoordIA()
+    evento = {"tipo": "nota", "valor": 3.0}
+    try:
+        conector.processar_lote([evento])
+        raise AssertionError("Conector aceitou evento sem fonte")
+    except ValueError as exc:
+        assert "fonte" in str(exc)
+    assert "fonte" not in evento
+
 if __name__ == "__main__":
     tests = [
         test_auditor_rejeita_proveniencia_ausente,
@@ -106,8 +138,10 @@ if __name__ == "__main__":
         test_orquestrador_advisory_aceito,
         test_decisao_humana_validada_registrada_uma_vez,
         test_api_falha_fechado_sem_token,
+        test_fluxo_bloqueia_erro_detector,
+        test_conector_nao_inventa_fonte,
     ]
     for fn in tests:
         fn()
         print("PASS", fn.__name__)
-    print("PASS: cinco grupos de contraprovas sintéticas P0.")
+    print("PASS: sete grupos de contraprovas sintéticas P0.")
