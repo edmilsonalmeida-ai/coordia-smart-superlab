@@ -1,52 +1,46 @@
 """
-Núcleo mínimo e eficiente — COORDIA SMART
-Zero dependências externas. Advisory only.
+Núcleo COORDIA SMART — versão potencializada.
+Evento → detectores → priorização → log imutável.
+Advisory only.
 """
 
+from typing import List, Dict, Callable
+from agents.priorizacao import priorizar
+from agents.log_persistente import LogPersistente
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List
-import json
-
-LogEntry = Dict[str, Any]
-Detector = Callable[[Dict], Dict | None]
 
 class Nucleo:
-    def __init__(self, detectores: List[Detector] | None = None):
-        self.detectores = detectores or []
-        self.log: List[LogEntry] = []
+    def __init__(self, detectores: List[Callable]):
+        self.detectores = detectores
+        self.log = LogPersistente("auditoria.jsonl")
 
     def processar(self, evento: Dict) -> List[Dict]:
-        """Processa um evento e retorna recomendações (nunca altera estado final)."""
         recomendacoes = []
         for detector in self.detectores:
-            rec = detector(evento)
-            if rec:
-                rec.setdefault("status", "recomendado")
-                rec["processado_em"] = datetime.now(timezone.utc).isoformat()
-                recomendacoes.append(rec)
-                self._registrar(evento, rec)
-        return recomendacoes
+            try:
+                rec = detector(evento)
+                if rec:
+                    if isinstance(rec, list):
+                        recomendacoes.extend(rec)
+                    else:
+                        recomendacoes.append(rec)
+            except Exception as e:
+                recomendacoes.append({
+                    "tipo": "alerta_erro",
+                    "recomendacao": f"Falha no detector: {type(e).__name__}",
+                    "origem": "nucleo",
+                    "risco": 0.8,
+                    "status": "recomendado",
+                    "erro": str(e)
+                })
 
-    def adicionar_detector(self, detector: Detector) -> None:
-        self.detectores.append(detector)
+        # Prioriza
+        priorizadas = priorizar(recomendacoes)
 
-    def _registrar(self, evento: Dict, rec: Dict) -> None:
-        self.log.append({
-            "evento": evento,
-            "recomendacao": rec,
-            "ts": datetime.now(timezone.utc).isoformat()
-        })
+        # Enriquece com metadados
+        for rec in priorizadas:
+            rec.setdefault("processado_em", datetime.now(timezone.utc).isoformat())
+            rec.setdefault("aviso", "Advisory only — requer ação humana")
+            self.log.registrar({"evento": evento, "recomendacao": rec})
 
-    def exportar_log(self) -> str:
-        return json.dumps(self.log, ensure_ascii=False, indent=2)
-
-# Exemplo de detector leve
-def detector_frequencia(evento: Dict) -> Dict | None:
-    if evento.get("tipo") == "frequencia" and evento.get("valor", 1.0) < 0.75:
-        return {
-            "tipo": "pendencia_frequencia",
-            "recomendacao": "Verificar ausências recentes",
-            "origem": evento.get("fonte", "desconhecida"),
-            "risco": round(1.0 - evento["valor"], 2)
-        }
-    return None
+        return priorizadas
