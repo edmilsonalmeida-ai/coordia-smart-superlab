@@ -5,16 +5,14 @@ Reutiliza o núcleo existente.
 """
 
 from typing import Dict, List, Any
-from datetime import datetime, timezone
 import hashlib
 
 def gerar_dados_sinteticos(n: int = 20, seed: int = 42) -> List[Dict]:
     """Gera planejamentos sintéticos determinísticos."""
     eventos = []
     for i in range(n):
-        # Determinístico via seed + índice
         h = int(hashlib.md5(f"{seed}-{i}".encode()).hexdigest()[:8], 16)
-        completo = (h % 5) != 0  # ~20% incompletos
+        completo = (h % 5) != 0
         dias_atraso = 0 if completo else (h % 10) + 1
         eventos.append({
             "tipo": "planejamento",
@@ -23,8 +21,8 @@ def gerar_dados_sinteticos(n: int = 20, seed: int = 42) -> List[Dict]:
             "completo": completo,
             "dias_atraso": dias_atraso,
             "fonte": "sintetico",
-            "aluno_id": f"SINT-{i:03d}",  # sintético
-            "ts": datetime.now(timezone.utc).isoformat()
+            "aluno_id": f"SINT-{i:03d}",
+            "ts": f"2026-11-13T21:00:00+00:00"  # fixo para determinismo
         })
     return eventos
 
