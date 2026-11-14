@@ -12,7 +12,7 @@ from prototype.alertas_planejamento import detector_planejamento
 
 class ConectorCoordIA:
     def __init__(self):
-    self.nucleo = Nucleo(
+        self.nucleo = Nucleo(
             DETECTORES_PADRAO + DETECTORES_EXTRAS + [detector_planejamento]
         )
         self.modo = "sintetico" if MODO_SINTETICO else "operacional"
