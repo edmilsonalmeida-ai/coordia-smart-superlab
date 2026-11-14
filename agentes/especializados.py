@@ -26,14 +26,30 @@ class AgentePriorizador:
         return {"agente": "priorizador", "recomendacoes": priorizadas}
 
 class AgenteAuditor:
-    """Verifica advisory e proveniência."""
+    """Valida invariantes mínimos antes de expor recomendações à decisão humana.
+
+    A origem declarada não é prova criptográfica da fonte: essa verificação cabe
+    ao conector autorizado e a uma auditoria de proveniência separada.
+    """
     def executar(self, recomendacoes: List[Dict]) -> Dict:
         problemas = []
-        for rec in recomendacoes:
+        for indice, rec in enumerate(recomendacoes):
+            if not isinstance(rec, dict):
+                problemas.append(f"recomendacao_{indice}: formato inválido")
+                continue
             if rec.get("status") != "recomendado":
-                problemas.append("status inválido")
-            if "resolvido" in str(rec).lower() or "executado" in str(rec).lower():
-                problemas.append("confirmação indevida")
+                problemas.append(f"recomendacao_{indice}: status inválido")
+            if not isinstance(rec.get("tipo"), str) or not rec["tipo"].strip():
+                problemas.append(f"recomendacao_{indice}: tipo ausente")
+            if not isinstance(rec.get("recomendacao"), str) or not rec["recomendacao"].strip():
+                problemas.append(f"recomendacao_{indice}: orientação ausente")
+            if not isinstance(rec.get("origem"), str) or rec["origem"].strip().lower() in ("", "desconhecida"):
+                problemas.append(f"recomendacao_{indice}: origem não declarada")
+            score = rec.get("prioridade")
+            if isinstance(score, bool) or not isinstance(score, (int, float)) or not 0 <= score <= 1:
+                problemas.append(f"recomendacao_{indice}: prioridade inválida")
+            if any(chave in rec for chave in ("decisao", "resolvido", "executado", "concluido", "aprovado")):
+                problemas.append(f"recomendacao_{indice}: campos de execução ou decisão indevidos")
         return {
             "agente": "auditor",
             "ok": len(problemas) == 0,
