@@ -5,25 +5,62 @@ on:
     branches: [ main, lab/** ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
+
       - name: Verificar flags de segurança
         run: |
           python -c "from config import assert_safe_mode; assert_safe_mode(); print('Flags OK')"
+
       - name: SuperTest núcleo
         run: python tests/supertest_nucleo.py
+
       - name: SuperTest completo
         run: python tests/supertest_completo.py
+
       - name: Testes adversariais planejamentos
         run: python tests/test_adversarial_planejamento.py
+
+      - name: Teste de alerta de erro
+        run: python tests/test_alerta_erro.py
+
+      - name: Verificação completa
+        run: python verificar_tudo.py
+
       - name: Smoke do protótipo
         run: |
           python -c "from prototype.alertas_planejamento import processar_alertas_sinteticos; r=processar_alertas_sinteticos(10); print(len(r), 'alertas sintéticos')"
+
+      - name: Resumo do modo leve (se log existir)
+        run: |
+          python resumo_leve.py || echo "resumo ok (log opcional)"
+
+  flags-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Garantir flags invioláveis
+        run: |
+          python -c "
+          from config import OPERATIONAL_GO, WRITE_ESCOLAR, assert_safe_mode
+          assert_safe_mode()
+          assert OPERATIONAL_GO is False
+          assert WRITE_ESCOLAR == 'NO_GO'
+          print('Flags invioláveis OK')
+          "
