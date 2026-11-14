@@ -59,5 +59,5 @@ python integracao/api_integracao.py
 
 - Recomendação ≠ confirmação de trabalho
 - Decisão humana obrigatória
-- Log imutável
+- Log JSONL local (append-only por convenção; integridade independente pendente)
 - Advisory only
