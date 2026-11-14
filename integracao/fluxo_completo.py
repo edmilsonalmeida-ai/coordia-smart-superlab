@@ -7,6 +7,7 @@ from integracao.conector import ConectorCoordIA
 from agents.decisao_humana import registrar_decisao
 from agents.feedback import registrar_feedback
 from agents.log_persistente import LogPersistente
+from agentes.especializados import AgenteAuditor
 
 class FluxoCoordIA:
     def __init__(self):
@@ -17,6 +18,9 @@ class FluxoCoordIA:
 
     def processar(self, eventos: List[Dict]) -> List[Dict]:
         recs = self.conector.processar_lote(eventos)
+        auditoria = AgenteAuditor().executar(recs)
+        if not auditoria["ok"]:
+            raise RuntimeError("AUDITORIA_REPROVADA: recomendações não liberadas")
         self.pendentes.extend(recs)
         return recs
 
