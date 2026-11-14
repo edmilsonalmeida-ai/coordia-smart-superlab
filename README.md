@@ -11,36 +11,44 @@ Tudo o mais (detectores, fontes, notificações, armazenamento) é plugável.
 
 ## Começar rápido
 
-```python
-from agents.nucleo import Nucleo, detector_frequencia
+```bash
+python run.py
+```
 
-nucleo = Nucleo([detector_frequencia])
+Ou use diretamente:
+
+```python
+from agents.nucleo import Nucleo
+from agents.detectores import DETECTORES_PADRAO
+
+nucleo = Nucleo(DETECTORES_PADRAO)
 recs = nucleo.processar({
     "tipo": "frequencia",
     "valor": 0.68,
     "fonte": "sistema_escolar",
-    "ts": "2026-11-13T21:00:00Z"
+    "aluno_id": "A123"
 })
 print(recs)
 print(nucleo.exportar_log())
 ```
 
+## SuperTest
+
+```bash
+python tests/supertest_nucleo.py
+```
+
 ## Arquitetura
 
-Veja [`architecture/LEVE.md`](architecture/LEVE.md) — núcleo simples + regras de extensão.
-
-## Princípios
-
-- Advisory only (nenhum agente confirma trabalho concluído)
-- Funções puras e interfaces mínimas
-- Zero dependências obrigatórias
-- Adaptação = novo adapter ou detector (sem mudar o núcleo)
-- Log imutável com proveniência
+Veja [`architecture/LEVE.md`](architecture/LEVE.md).
 
 ## Estrutura
 
-- `agents/nucleo.py` — núcleo executável e leve
-- `architecture/LEVE.md` — design e regras de extensão
-- `docs/` — análise SMART/FMDS e mapeamento
+- `agents/nucleo.py` — núcleo
+- `agents/detectores.py` — detectores plugáveis (frequência, notas, prazo, evasão)
+- `adapters/exemplo_planilha.py` — adapter CSV
+- `run.py` — demonstração completa
+- `tests/supertest_nucleo.py` — SuperTest
+- `docs/` — análises e melhor caminho
 
-Contribuição concreta ao SuperLAB: simples hoje, adaptável sempre.
+Contribuição concreta ao SuperLAB.
