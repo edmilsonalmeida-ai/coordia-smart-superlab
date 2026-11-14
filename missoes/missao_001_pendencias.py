@@ -5,6 +5,10 @@ Foco: detectar, priorizar e encaminhar pendências escolares.
 Modo operacional ativo. Advisory + decisão humana.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from typing import List, Dict
 from integracao.fluxo_completo import FluxoCoordIA
 from datetime import datetime, timezone
@@ -19,7 +23,6 @@ class Missao001:
         self.iniciada_em = datetime.now(timezone.utc).isoformat()
 
     def executar(self, eventos: List[Dict]) -> Dict:
-        """Executa a missão sobre um lote de eventos."""
         recomendacoes = self.fluxo.processar(eventos)
         return {
             "missao": self.id,
@@ -45,7 +48,6 @@ class Missao001:
         }
 
 def demo():
-    """Demonstração da missão com dados de exemplo."""
     missao = Missao001()
     eventos = [
         {"tipo": "frequencia", "valor": 0.48, "aluno_id": "ALU-101", "fonte": "operacional"},
