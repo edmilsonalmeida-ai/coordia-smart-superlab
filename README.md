@@ -2,46 +2,24 @@
 
 **Arquitetura leve, eficiente e extensível.**
 
-## Ideia central
+## Fase atual (lab/coordia-smart-arquitetura-20261113)
 
-Núcleo mínimo que gera recomendações advisory com proveniência.  
-Tudo o mais é plugável. Nenhum agente confirma trabalho concluído.
+Protótipo determinístico de alertas de planejamentos com dados exclusivamente sintéticos.
 
-## Uso rápido
+### Verificação rápida
 
 ```bash
-# Demonstração completa
-python run_completo.py
-
-# SuperTests
-python tests/supertest_nucleo.py
-python tests/supertest_completo.py
-
-# API HTTP mínima
-python api/server.py
-# Depois: curl -X POST http://127.0.0.1:8080/recomendacao -d '{"tipo":"frequencia","valor":0.6,"fonte":"api"}'
+python verificar_tudo.py
+python -c "from prototype.cenarios_sinteticos import executar_todos_cenarios; print(executar_todos_cenarios())"
 ```
 
-## Estrutura
+### Estrutura principal
 
-| Caminho | Função |
-|---------|---------|
-| `agents/nucleo.py` | Núcleo (advisory, log em memória) |
-| `agents/detectores.py` | Detectores plugáveis |
-| `agents/log_persistente.py` | Log append-only (JSONL) |
-| `adapters/exemplo_planilha.py` | Adapter CSV |
-| `integracoes/webhook_exemplo.py` | Notificação webhook |
-| `api/server.py` | API HTTP (stdlib) |
-| `run.py` / `run_completo.py` | Runners |
-| `tests/` | SuperTests |
-| `architecture/LEVE.md` | Design e regras de extensão |
-| `docs/` | Análises SMART/FMDS e melhor caminho |
+- `agents/` — núcleo, detectores (5 papéis), log, decisão humana
+- `prototype/` — alertas de planejamentos + cenários
+- `tests/` — SuperTests + adversariais
+- `.github/workflows/ci.yml` — CI
+- `docs/` — revisões, recibos e resultados
+- `config.py` — flags de segurança (OPERATIONAL_GO=false, WRITE_ESCOLAR=NO_GO)
 
-## Princípios
-
-- Advisory only
-- Proveniência obrigatória
-- Zero dependências obrigatórias
-- Extensão = novo arquivo (sem alterar o núcleo)
-
-Contribuição concreta ao SuperLAB.
+Advisory only. Extensível. Sem dependências obrigatórias.
