@@ -43,6 +43,9 @@ jobs:
       - name: Contraprovas Câmara Extra P0 (sintéticas)
         run: python tests/test_camara_extra_failclosed.py
 
+      - name: Contraprovas HTTP local e PII (sintéticas)
+        run: python tests/test_camara_extra_http.py
+
       - name: Smoke do protótipo
         run: |
           python -c "from prototype.alertas_planejamento import processar_alertas_sinteticos; r=processar_alertas_sinteticos(10); print(len(r), 'alertas sintéticos')"
