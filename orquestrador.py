@@ -5,6 +5,7 @@ Você pede. Ele encaminha e aciona o que for necessário.
 """
 
 import sys
+import unicodedata
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -22,7 +23,8 @@ class Orquestrador:
         """
         Interpreta o pedido e aciona os componentes necessários.
         """
-        pedido_lower = pedido.lower()
+        caracteres = unicodedata.normalize("NFD", pedido.casefold())
+        pedido_lower = "".join(c for c in caracteres if not unicodedata.combining(c))
         acoes = []
         resultado = {"pedido": pedido, "acoes": [], "status_modo": status_modo()}
 
@@ -42,7 +44,7 @@ class Orquestrador:
                 acoes.append("peso_frequencia_ajustado")
             resultado["pesos"] = obter_pesos()
 
-        if any(k in pedido_lower for k in ["status", "painel", "como está", "situacao"]):
+        if any(k in pedido_lower for k in ["status", "painel", "como esta", "situacao"]):
             resultado["status"] = self.missao.relatorio()
             acoes.append("status_consultado")
 
