@@ -2,9 +2,11 @@
 """
 Orquestrador CoordIA.
 Você pede. Ele encaminha e aciona o que for necessário.
+Reconhece pedidos em português com ou sem acentos.
 """
 
 import sys
+import unicodedata
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -12,6 +14,11 @@ from typing import Dict, List
 from missoes.missao_001_pendencias import Missao001
 from agents.priorizacao import definir_peso, obter_pesos
 from config import status_modo
+
+def normalizar(texto: str) -> str:
+    """Remove acentos e normaliza para comparação de intenção."""
+    caracteres = unicodedata.normalize("NFD", texto.casefold())
+    return "".join(c for c in caracteres if not unicodedata.combining(c))
 
 class Orquestrador:
     def __init__(self):
@@ -21,13 +28,14 @@ class Orquestrador:
     def pedir(self, pedido: str, eventos: List[Dict] = None) -> Dict:
         """
         Interpreta o pedido e aciona os componentes necessários.
+        Conserva o pedido original no histórico.
         """
-        pedido_lower = pedido.lower()
+        pedido_norm = normalizar(pedido)
         acoes = []
         resultado = {"pedido": pedido, "acoes": [], "status_modo": status_modo()}
 
-        # Detecção de intenção
-        if any(k in pedido_lower for k in ["pendencia", "prioriz", "missao", "detect", "alerta"]):
+        # Detecção de intenção (com ou sem acento)
+        if any(k in pedido_norm for k in ["pendencia", "prioriz", "missao", "detect", "alerta", "conferir"]):
             if eventos:
                 res_missao = self.missao.executar(eventos)
                 resultado["missao"] = res_missao
@@ -35,21 +43,20 @@ class Orquestrador:
             else:
                 acoes.append("missao_001_pronta (sem eventos)")
 
-        if any(k in pedido_lower for k in ["peso", "priorizacao", "ajustar"]):
-            # Exemplo simples: se mencionar frequência, aumenta peso
-            if "frequencia" in pedido_lower:
+        if any(k in pedido_norm for k in ["peso", "priorizacao", "ajustar"]):
+            if "frequencia" in pedido_norm:
                 definir_peso("pendencia_frequencia", 1.8)
                 acoes.append("peso_frequencia_ajustado")
             resultado["pesos"] = obter_pesos()
 
-        if any(k in pedido_lower for k in ["status", "painel", "como está", "situacao"]):
+        if any(k in pedido_norm for k in ["status", "painel", "como esta", "situacao"]):
             resultado["status"] = self.missao.relatorio()
             acoes.append("status_consultado")
 
-        if any(k in pedido_lower for k in ["teste", "verificar", "supertest"]):
+        if any(k in pedido_norm for k in ["teste", "verificar", "supertest"]):
             acoes.append("verificacao_sugerida (rode: python verificar_tudo.py)")
 
-        if any(k in pedido_lower for k in ["treinar", "colonia", "ensinar"]):
+        if any(k in pedido_norm for k in ["treinar", "colonia", "ensinar"]):
             acoes.append("treinamento_disponivel (rode: python colonia/treinamento.py)")
 
         resultado["acoes"] = acoes
@@ -72,18 +79,17 @@ def demo():
          "id_planejamento": "PLN-X", "disciplina": "Ciências", "aluno_id": "A2", "fonte": "pedido"},
     ]
 
-    print("=== Pedido 1: detectar pendências ===")
-    r1 = orch.pedir("Detectar e priorizar pendências", eventos)
+    print("=== Pedido com acento: Conferir pendências ===")
+    r1 = orch.pedir("Conferir pendências", eventos)
     print("Ações:", r1["acoes"])
-    if "missao" in r1:
-        print(f"Recomendações: {r1['missao']['recomendacoes']}")
 
-    print("\n=== Pedido 2: status ===")
-    r2 = orch.pedir("Qual o status atual?")
+    print("\n=== Pedido com acento: Como está? ===")
+    r2 = orch.pedir("Como está?")
     print("Ações:", r2["acoes"])
 
-    print("\n=== Resumo do orquestrador ===")
-    print(orch.resumo())
+    print("\n=== Pedido sem acento (legado) ===")
+    r3 = orch.pedir("Detectar e priorizar pendencias", eventos)
+    print("Ações:", r3["acoes"])
 
 if __name__ == "__main__":
     demo()
