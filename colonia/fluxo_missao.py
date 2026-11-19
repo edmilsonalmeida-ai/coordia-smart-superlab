@@ -2,6 +2,7 @@
 """
 Fluxo de missão da colônia CoordIA.
 Você entrega a missão. A colônia organiza, pesquisa, debate, executa e verifica.
+Se precisar, sai do laboratório com autorização.
 """
 
 import sys
@@ -17,37 +18,62 @@ class Colonia:
     def __init__(self):
         self.nucleo = obter_nucleo()
         self.historico = []
+        self.fora_do_lab = False
 
     def receber_missao(self, descricao: str, eventos: List[Dict] = None) -> Dict:
         """Ponto de entrada: recebe a missão e coordena o fluxo."""
         missao = {
             "descricao": descricao,
             "recebida_em": datetime.now(timezone.utc).isoformat(),
-            "fases": {}
+            "fases": {},
+            "ambiente": "laboratorio"
         }
 
-        # Fase 1: Organizar
+        # Fases dentro do laboratório
         missao["fases"]["organizar"] = self._organizar(descricao, eventos)
-
-        # Fase 2: Pesquisar
         missao["fases"]["pesquisar"] = self._pesquisar(eventos or [])
-
-        # Fase 3: Debater
         missao["fases"]["debater"] = self._debater(missao["fases"]["pesquisar"])
-
-        # Fase 4: Executar
         missao["fases"]["executar"] = self._executar(eventos or [])
-
-        # Fase 5: Verificar
         missao["fases"]["verificar"] = self._verificar(missao["fases"]["executar"])
 
+        # Avalia se precisa sair do lab
+        missao["precisa_sair"] = self._avaliar_saida(missao)
+
         missao["status"] = "concluida_lab"
-        missao["aviso"] = "Verificação em laboratório. Continuação externa requer autorização."
+        missao["aviso"] = "Verificação em laboratório concluída."
         self.historico.append(missao)
         return missao
 
+    def sair_do_laboratorio(self, missao: Dict, autorizacao: str) -> Dict:
+        """Sai do laboratório com autorização explícita."""
+        if autorizacao != "AUTORIZADO-SAIR":
+            return {"erro": "Autorização inválida", "status": "bloqueado"}
+
+        self.fora_do_lab = True
+        missao["ambiente"] = "externo"
+        missao["saiu_em"] = datetime.now(timezone.utc).isoformat()
+        missao["status"] = "em_operacao_externa"
+        missao["aviso"] = "Operação externa. Advisory only. Decisão humana obrigatória."
+        return missao
+
+    def _avaliar_saida(self, missao: Dict) -> Dict:
+        """Avalia se a missão precisa continuar fora do lab."""
+        verificar = missao["fases"].get("verificar", {})
+        executar = missao["fases"].get("executar", {})
+
+        motivos = []
+        if executar.get("recomendacoes", 0) > 0:
+            motivos.append("Recomendações geradas requerem ação humana")
+        if not verificar.get("ok", True):
+            motivos.append("Verificação encontrou problemas")
+
+        return {
+            "necessario": len(motivos) > 0,
+            "motivos": motivos,
+            "autorizacao_requerida": "AUTORIZADO-SAIR"
+        }
+
     def _organizar(self, descricao: str, eventos: List[Dict]) -> Dict:
-        """Organiza o trabalho: identifica escopo e recursos."""
         return {
             "escopo": descricao,
             "eventos_recebidos": len(eventos) if eventos else 0,
@@ -56,7 +82,6 @@ class Colonia:
         }
 
     def _pesquisar(self, eventos: List[Dict]) -> Dict:
-        """Pesquisa: analisa os eventos e identifica padrões."""
         tipos = {}
         for ev in eventos:
             tipo = ev.get("tipo", "desconhecido")
@@ -68,7 +93,6 @@ class Colonia:
         }
 
     def _debater(self, pesquisa: Dict) -> Dict:
-        """Debate: agentes discutem prioridades e abordagens."""
         tipos = pesquisa.get("tipos_encontrados", {})
         consenso = []
         if "planejamento" in tipos:
@@ -84,7 +108,6 @@ class Colonia:
         }
 
     def _executar(self, eventos: List[Dict]) -> Dict:
-        """Executa: processa eventos e gera recomendações."""
         todas_recs = []
         for ev in eventos:
             recs = self.nucleo.processar(ev)
@@ -97,7 +120,6 @@ class Colonia:
         }
 
     def _verificar(self, execucao: Dict) -> Dict:
-        """Verifica: valida advisory e proveniência."""
         top = execucao.get("top", [])
         problemas = []
         for rec in top:
@@ -118,19 +140,21 @@ def demo():
         {"tipo": "frequencia", "valor": 0.45, "aluno_id": "COL-1", "fonte": "colonia"},
         {"tipo": "planejamento", "completo": False, "dias_atraso": 7,
          "id_planejamento": "PLN-COL", "disciplina": "Geografia", "aluno_id": "COL-2", "fonte": "colonia"},
-        {"tipo": "nota", "valor": 3.5, "aluno_id": "COL-3", "fonte": "colonia"},
     ]
 
-    resultado = colonia.receber_missao("Detectar e priorizar pendências escolares", eventos)
-
+    # Fluxo no laboratório
+    resultado = colonia.receber_missao("Detectar pendências", eventos)
     print(f"Missão: {resultado['descricao']}")
-    print(f"Status: {resultado['status']}")
-    print()
-    for fase, dados in resultado["fases"].items():
-        print(f"  {fase}: {dados.get('status', 'ok')}")
-    print()
-    print(f"Verificação OK: {resultado['fases']['verificar']['ok']}")
-    print(f"Recomendações: {resultado['fases']['executar']['recomendacoes']}")
+    print(f"Ambiente: {resultado['ambiente']}")
+    print(f"Precisa sair: {resultado['precisa_sair']['necessario']}")
+    print(f"Motivos: {resultado['precisa_sair']['motivos']}")
+
+    # Saída controlada
+    if resultado["precisa_sair"]["necessario"]:
+        print("\nSolicitando saída do laboratório...")
+        resultado = colonia.sair_do_laboratorio(resultado, "AUTORIZADO-SAIR")
+        print(f"Ambiente: {resultado['ambiente']}")
+        print(f"Status: {resultado['status']}")
 
 if __name__ == "__main__":
     demo()
